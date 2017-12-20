@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="IKSolver:jar">
+    <output-path>$PROJECT_DIR$/working/Plugins</output-path>
+    <root id="archive" name="IKSolver.jar">
+      <element id="module-output" name="plugin.IKSolver" />
+    </root>
+  </artifact>
+</component>
