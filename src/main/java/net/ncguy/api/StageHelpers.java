@@ -8,6 +8,7 @@ import com.kotcrab.vis.ui.widget.spinner.Spinner;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class StageHelpers {
@@ -75,8 +76,14 @@ public class StageHelpers {
         box.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                if(Objects.equals(box.getSelected(), prop.get())) return;
                 prop.set(box.getSelected());
             }
+        });
+
+        prop.addListener((observable, oldValue, newValue) -> {
+            if(Objects.equals(box.getSelected(), prop.get())) return;
+            box.setSelected(prop.get());
         });
 
         menuItem.add(label).grow();
@@ -119,5 +126,20 @@ public class StageHelpers {
 
         return menuItem;
     }
+
+    public static MenuItem MenuItem(String label, Runnable task, Menu menu) {
+        MenuItem menuItem = new MenuItem(label, new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                task.run();
+            }
+        });
+
+        if(menu != null)
+            menu.addItem(menuItem);
+
+        return menuItem;
+    }
+
 
 }

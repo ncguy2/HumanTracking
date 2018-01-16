@@ -3,14 +3,17 @@ package net.ncguy.tracking.display;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
@@ -19,10 +22,8 @@ import com.badlogic.gdx.utils.Array;
 import javafx.beans.property.SimpleBooleanProperty;
 import net.ncguy.api.ik.*;
 import net.ncguy.api.loaders.LoaderHub;
-import net.ncguy.skeleton.SKChain;
-import net.ncguy.skeleton.SKJoint;
-import net.ncguy.skeleton.SKUtils;
-import net.ncguy.skeleton.SkeletonFactory;
+import net.ncguy.skeleton.*;
+import net.ncguy.tracking.Launcher;
 import net.ncguy.tracking.TrackerPipeline;
 import net.ncguy.tracking.display.shader.GridShader;
 import net.ncguy.tracking.render.ParticleController;
@@ -31,37 +32,55 @@ import net.ncguy.tracking.render.ParticleFactory;
 import net.ncguy.tracking.utils.ShaderPreprocessor;
 import net.ncguy.tracking.utils.TransformStack;
 import net.ncguy.tracking.world.Node;
+import net.ncguy.ui.StatusBar;
+import net.ncguy.ui.TaskWatcher;
 import net.ncguy.ui.detachable.DetachableWindow;
 import net.ncguy.ui.detachable.IDetachableContainer;
 import net.ncguy.ui.detachable.Sidebar;
 import net.ncguy.ui.scene3d.AnchoredLabel;
-import net.ncguy.utils.FileUtils;
-import net.ncguy.utils.MathsUtils;
-import net.ncguy.utils.Reference;
+import net.ncguy.utils.*;
+import net.ncguy.utils.task.Task;
 
+import java.awt.*;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
+import java.util.function.Consumer;
 
+import static com.badlogic.gdx.graphics.GL20.GL_DEPTH_TEST;
 import static com.badlogic.gdx.graphics.GL20.GL_LINES;
+import static net.ncguy.skeleton.TrackedBones.skeletalNode;
 import static net.ncguy.utils.Reference.Colour.RendererColours.BONE_LOCATION_ACTIVE_COLOUR;
 import static net.ncguy.utils.Reference.Colour.RendererColours.BONE_LOCATION_COLOUR;
 
 public class TrackingSpace extends AbstractScreen {
 
     public static boolean useCodedSkeleton = true;
+    public static boolean modelReloadRequested = false;
+
+    public static String currentLoadedModel = "";
+
+    static Consumer<String> setModelFunc;
+    public static void SelectModel(String modelPath) {
+        if(setModelFunc != null)
+            setModelFunc.accept(modelPath);
+    }
+
+    FrameBuffer shapeFbo;
+    ShaderProgram shapeRenderShader;
+    Texture texture;
 
     Environment environment;
     PerspectiveCamera camera;
     ModelBatch modelBatch;
     Model gridMesh;
     ShaderProgram gridShader;
-    GridShader shader;
-    Texture texture;
+    GridShader shader;;
     FirstPersonCameraController ctrlr;
     Node.ModularModelInstance skySphere;
     Node rootNode;
+    StatusBar statusBar;
+    TaskWatcher taskWatcher;
 
     TrackerPipeline trackerPipeline;
 
@@ -80,6 +99,7 @@ public class TrackingSpace extends AbstractScreen {
     Node movingNodeB;
     Node movingNodeC;
 
+    PointLight pointLight;
     ModelInstance coneInstance;
 
     Sidebar leftSidebar;
@@ -93,9 +113,30 @@ public class TrackingSpace extends AbstractScreen {
     public static SimpleBooleanProperty showBoneDirections = new SimpleBooleanProperty(false);
     public static SimpleBooleanProperty showBoneConnections = new SimpleBooleanProperty(true);
 
+    private Launcher.FileDropListener onFilesDroppedFunc = this::OnFilesDropped;
+
+    public void InitShapeRenderShader() {
+        String shapeVert = ShaderPreprocessor.LoadShader(Gdx.files.internal("shaders/shape/shape.vert"));
+        String shapeFrag = ShaderPreprocessor.LoadShader(Gdx.files.internal("shaders/shape/shape.frag"));
+        shapeRenderShader = new ShaderProgram(shapeVert, shapeFrag);
+
+        if(!shapeRenderShader.isCompiled()) {
+            System.out.println(shapeRenderShader.getLog());
+        }
+    }
+
     @Override
     public void show() {
+
+
+        Launcher.fileDroppedListeners.add(onFilesDroppedFunc);
+
         super.show();
+
+        shapeFbo = CreateFrameBuffer(Pixmap.Format.RGBA8888, 1, this.width, this.height, false);
+
+        InitShapeRenderShader();
+
         camera = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.set(10, 10, 10);
         camera.lookAt(0, 0 ,0);
@@ -103,6 +144,11 @@ public class TrackingSpace extends AbstractScreen {
         camera.near = 0.1f;
         camera.far = 1024.f;
         camera.update();
+
+        shapeRenderShader.begin();
+        shapeRenderShader.setUniformf("u_near", camera.near);
+        shapeRenderShader.setUniformf("u_far", camera.far);
+        shapeRenderShader.end();
 
         String vertSrc = ShaderPreprocessor.LoadShader(Gdx.files.internal("shaders/grid/grid.vert"));
         String fragSrc = ShaderPreprocessor.LoadShader(Gdx.files.internal("shaders/grid/grid.frag"));
@@ -127,9 +173,13 @@ public class TrackingSpace extends AbstractScreen {
 
         rootNode = new Node(new Node.ModularModelInstance(mb.createXYZCoordinates(3, mtl, VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.ColorPacked)));
 
-        texture = new Texture(Gdx.files.internal("textures/houseSphere.jpg"));
-        Material skyMtl = new Material(TextureAttribute.createDiffuse(texture));
+        Material skyMtl = new Material();
         skySphere = new Node.ModularModelInstance(mb.createSphere(-64, -64, -64, 64, 64, skyMtl, VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates));
+
+        AssetUtils.instance().GetAsync("textures/houseSphere.jpg", Texture.class, t -> {
+            texture = t;
+            skyMtl.set(TextureAttribute.createDiffuse(texture));
+        });
 
         skySphere.transform.setToRotation(1, 0, 0, 180);
         skySphere.transform.scale(10, 10, 10);
@@ -142,62 +192,41 @@ public class TrackingSpace extends AbstractScreen {
         skySphere.isVisible = false;
         rootNode.AddChild(skySphere);
 
-//        String modelPath = "models/Peggy/Peggy.fbx";
-//        String modelPath = "models/PeasantGirl/peasant_girl.fbx";
-//        String modelPath = "models/Arissa/Arissa.fbx";
-//        String modelPath = "models/ArissaScaled/ArissaScaled.fbx";
-//        String modelPath = "models/Hand/Hand.fbx";
-        String modelPath = "models/Nightshade/nightshade_j_friedrich.fbx";
-//        String modelPath = "models/Peggy/Peggy2.fbx";
-//        String modelPath = "models/MH_Female/MH_female.fbx";
-//        String modelPath = "models/BadBetty/BAd_Betty.fbx";
-//        String modelPath = "models/Ship/ship.obj";
-//        String modelPath = "models/Catwoman/catwoman.fbx";
-//        String modelPath = "models/Female dress/dress.fbx";
-//        String modelPath = "models/Girl/girl model.obj";
+        String modelPath = Launcher.modelPath;
 
-        Model skeletonModel = FileUtils.LoadModel(modelPath);
-        Node skeletonNode = new Node(skeletonModel).Name("SkeletonMesh");
-//        skeletonNode.GetTransform().scale(.1f, .1f, .1f);
-//        skeletonNode.GetTransform().translate(5, 0, 0);
-        rootNode.AddChild(skeletonNode);
+        LoadModel(modelPath);
+
+//
+//        Model skeletonModel = FileUtils.LoadModel(modelPath);
+//        Node skeletonNode = new Node(skeletonModel).Name("SkeletonMesh");
+//        rootNode.AddChild(skeletonNode);
 
 //        System.out.println(skeletonNode.GetInstance().nodes.first().id);
 
-        Array<com.badlogic.gdx.graphics.g3d.model.Node> nodes = skeletonNode.GetInstance().nodes;
 
-        Scanner scanner = new Scanner(System.in);
-
-        if(nodes.size > 0) {
-            com.badlogic.gdx.graphics.g3d.model.Node first = nodes.first();
-            com.badlogic.gdx.graphics.g3d.model.Node root = FindRootNode(first);
-
-            System.out.println(root != null ? root.id : "null");
-
-            if(root != null) {
-                PrintNode(root, "");
-                System.out.print("Root node: ");
-                controlledBoneStart = scanner.nextLine();
-                System.out.print("Target Effector: ");
-                controlledBoneEffector = scanner.nextLine();
-                boneStructure = BuildNode(root, skeletonNode.GetInstance());
-
-                SKUtils.labels = labels;
-                SKUtils.font = font;
-
-                skStructure = SKUtils.FromNodeTree(root, skeletonNode.GetInstance());
-                String print = skStructure.Print();
-                try {
-                    Files.write(new File("SKStructure.txt").toPath(), print.getBytes());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        }else{
-            System.out.println("No bones detected");
-            scanner.next();
-        }
+//        Scanner scanner = new Scanner(System.in);
+//
+//        Array<com.badlogic.gdx.graphics.g3d.model.Node> nodes = skeletonNode.GetInstance().nodes;
+//        if(nodes.size > 0) {
+//            com.badlogic.gdx.graphics.g3d.model.Node first = nodes.first();
+//            com.badlogic.gdx.graphics.g3d.model.Node root = FindRootNode(first);
+//
+//            System.out.println(root != null ? root.id : "null");
+//
+//            if(root != null) {
+//                PrintNode(root, "");
+//                boneStructure = BuildNode(root, skeletonNode.GetInstance());
+//
+//                SKUtils.labels = labels;
+//                SKUtils.font = font;
+//
+//                skStructure = SKUtils.FromNodeTree(root, skeletonNode.GetInstance());
+//            }
+//
+//        }else{
+//            System.out.println("No bones detected");
+//            scanner.next();
+//        }
 
 //        skeletonNode.AddChild(new Node(sphereModel));
 
@@ -205,10 +234,12 @@ public class TrackingSpace extends AbstractScreen {
 
 
         ctrlr = new FirstPersonCameraController(camera);
+        ctrlr.setVelocity(75);
         Gdx.input.setInputProcessor(new InputMultiplexer(stage, ctrlr));
 
         AbstractScreen.rootNode.set(rootNode);
 
+//        renderer = new ShapeRenderer(5000, shapeRenderShader);
         renderer = new ShapeRenderer();
 
         int desiredBoneCount = 256;
@@ -234,15 +265,17 @@ public class TrackingSpace extends AbstractScreen {
         leftSidebar = new Sidebar(true);
         rightSidebar = new Sidebar(false);
 
-        stage.addActor(leftSidebar.Resize(stage, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
-        stage.addActor(rightSidebar.Resize(stage, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
+        statusBar = new StatusBar(true);
+        stage.SetStatusBar(statusBar);
+        stage.addActor(statusBar.GetRootTable());
 
-        String s = boneStructure.ToString();
-        try {
-            Files.write(new File("bones.txt").toPath(), s.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        taskWatcher = new TaskWatcher(stage);
+        statusBar.AddToRight(taskWatcher.GetRootTable());
+
+        float menuBarHeight = stage.GetMenuBar().getTable().getHeight();
+
+        stage.addActor(leftSidebar.Resize(stage, Gdx.graphics.getWidth(), (int) (Gdx.graphics.getHeight() - (statusBar.getHeight() + menuBarHeight))));
+        stage.addActor(rightSidebar.Resize(stage, Gdx.graphics.getWidth(), (int) (Gdx.graphics.getHeight() - (statusBar.getHeight() + menuBarHeight))));
 
         stage.SetLeftSidebar(leftSidebar);
         stage.SetRightSidebar(rightSidebar);
@@ -259,16 +292,114 @@ public class TrackingSpace extends AbstractScreen {
         stage.SetBoneStructureSetter(newStructure -> boneStructure = newStructure);
         stage.SetSkySphereSetter(this::SetSkySphereTexture);
 
+        pointLight = new PointLight();
+        pointLight.color.set(.8f, .8f, .8f, 1.f);
+        pointLight.intensity = 50.f;
+
         environment = new Environment();
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1.f));
         environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -0.5f, -1.0f, -0.8f));
+        environment.add(pointLight);
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1.f));
+        environment.set(new ColorAttribute(ColorAttribute.Emissive, 1, 1, 1, 1));
+//        environment.set(new DepthTestAttribute(GL20.GL_LESS, camera.near, camera.far));
 
         trackerPipeline = new TrackerPipeline();
+
+        setModelFunc = this::LoadModel;
 
         Load();
 
         LoaderHub.trackerLoader.Iterate(trackerPipeline::add);
         trackerPipeline.StartTracker();
+
+        Launcher.PostNotification("Tracking Space", "Tracking space is ready for use", TrayIcon.MessageType.INFO);
+    }
+
+    final String[] validFileExtensions_conversion = new String[] {
+            ".obj",
+            ".fbx",
+    };
+    final String[] validFileExtensions_asis = new String[] {
+            ".g3dj",
+            ".g3db",
+    };
+
+    final List<String> validFileExtensions_convList = Arrays.asList(validFileExtensions_conversion);
+    final List<String> validFileExtensions_asisList = Arrays.asList(validFileExtensions_asis);
+
+    protected boolean OnFilesDropped(final String[] files, int screenX, int screenY) {
+        if(files.length != 1) {
+            System.err.println("Incorrect amount of files dropped, Only drop the model file to import a model");
+            return false;
+        }
+
+        if(Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT))
+            return false;
+
+        String file = files[0];
+        if(!LoadModel(file))
+            return false;
+        Launcher.PostNotification("Imported new model", file, TrayIcon.MessageType.INFO);
+        return true;
+    }
+
+    protected boolean LoadModel(String modelPath) {
+
+        Task task = stage.AddTask("Loading model: " + modelPath);
+
+        String ext = modelPath.substring(modelPath.lastIndexOf('.'));
+
+        if(!(validFileExtensions_convList.contains(ext) || validFileExtensions_asisList.contains(ext))) {
+            Launcher.PostNotification("Invalid file extension", ext + " is an unsupported file type", TrayIcon.MessageType.WARNING);
+            task.progress = 5;
+            return false;
+        }
+
+        Node node = rootNode.FindChild("SkeletonMesh");
+        if(node != null) {
+            rootNode.RemoveChild(node);
+            stage.worldNodes.remove(node);
+            skeletalNode.set(null);
+        }
+
+        currentLoadedModel = modelPath;
+
+        FileUtils.LoadModelAsync(modelPath, !validFileExtensions_asisList.contains(ext), skeletonModel -> {
+            Node skeletonNode = new Node(skeletonModel).Name("SkeletonMesh");
+
+            rootNode.AddChild(skeletonNode);
+            stage.worldNodes.add(skeletonNode);
+
+            Array<com.badlogic.gdx.graphics.g3d.model.Node> nodes = skeletonNode.GetInstance().nodes;
+            if(nodes.size > 0) {
+                com.badlogic.gdx.graphics.g3d.model.Node first = nodes.first();
+                com.badlogic.gdx.graphics.g3d.model.Node root = FindRootNode(first);
+                skStructure = SKUtils.FromNodeTree(root, skeletonNode.GetInstance());
+
+                TrackedBones.rootBone.set(skStructure);
+            }
+
+            skeletalNode.set(skeletonNode);
+
+            stage.RemoveTask(task);
+        });
+
+        return true;
+
+
+//        Model skeletonModel = FileUtils.LoadModel(modelPath, !validFileExtensions_asisList.contains(ext));
+//        Node skeletonNode = new Node(skeletonModel).Name("SkeletonMesh");
+//        rootNode.AddChild(skeletonNode);
+//        stage.worldNodes.add(skeletonNode);
+//
+//        Array<com.badlogic.gdx.graphics.g3d.model.Node> nodes = skeletonNode.GetInstance().nodes;
+//        if(nodes.size > 0) {
+//            com.badlogic.gdx.graphics.g3d.model.Node first = nodes.first();
+//            com.badlogic.gdx.graphics.g3d.model.Node root = FindRootNode(first);
+//            skStructure = SKUtils.FromNodeTree(root, skeletonNode.GetInstance());
+//
+//            TrackedBones.rootBone.set(skStructure);
+//        }
     }
 
     private BoneNode BuildNode(com.badlogic.gdx.graphics.g3d.model.Node root, ModelInstance instance) {
@@ -493,10 +624,7 @@ public class TrackingSpace extends AbstractScreen {
 //        destinationEffect.part.maxCount = 500;
     }
 
-    Map<String, Texture> skySphereTextures = new HashMap<>();
-
     public void SetSkySphereTexture(int index) {
-        TextureAttribute attr = (TextureAttribute) skySphere.materials.get(0).get(TextureAttribute.Diffuse);
 
         String[] paths = new String[] {
                 "textures/default.png",
@@ -506,20 +634,24 @@ public class TrackingSpace extends AbstractScreen {
                 "textures/winterSphere.jpg",
         };
 
+        TextureAttribute attr = (TextureAttribute) skySphere.materials.get(0).get(TextureAttribute.Diffuse);
+        attr.textureDescription.texture = texture;
+
         String path = paths[index % paths.length];
 
-        if(skySphereTextures.containsKey(path))
-            texture = skySphereTextures.get(path);
-        else {
-            texture = new Texture(Gdx.files.internal(path));
-            skySphereTextures.put(path, texture);
-        }
-        attr.textureDescription.texture = texture;
+        AssetUtils.instance().GetAsync(path, Texture.class, tex -> {
+            attr.textureDescription.texture = tex;
+        });
     }
 
     float runTime = 0;
     @Override
     protected void Render_Impl(float delta) {
+
+        if(modelReloadRequested) {
+            LoadModel(currentLoadedModel);
+            modelReloadRequested = false;
+        }
 
         delta *= Reference.runScalar.floatValue();
 
@@ -545,18 +677,29 @@ public class TrackingSpace extends AbstractScreen {
 
         float x = (float) (Math.cos(runTime) * 10f);
         float y = (float) (Math.sin(runTime * 2.f) * 10f);
-        movingNode.GetTransform().setTranslation(x, 5, y);
 
+        movingNode.GetTransform().setTranslation(x, 5, y);
         movingNodeB.GetTransform().setTranslation(5, x, y);
         movingNodeC.GetTransform().setTranslation(y, x, 5);
 
+        pointLight.intensity = 50.f;
+        pointLight.color.g = .4f;
+        pointLight.color.b = .7f;
+        pointLight.position.set(camera.position.cpy().add(camera.direction.cpy().scl(10f)));
+
         camera.up.set(0, 1, 0);
         ctrlr.update(Gdx.graphics.getDeltaTime());
+
+        fbo.begin();
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+
         modelBatch.begin(camera);
         rootNode.Update();
         rootNode.Render(modelBatch, environment, new TransformStack());
         modelBatch.render(particleController.render(0, delta));
         modelBatch.end();
+        fbo.end();
 
         renderer.setProjectionMatrix(stageCamera.combined);
 
@@ -582,18 +725,22 @@ public class TrackingSpace extends AbstractScreen {
         if(LoaderHub.trackerLoader.HasActiveTracker()) {
 //            ITracker tracker = LoaderHub.trackerLoader.activeTracker.get();
 //            tracker.TrackAndApply(boneStructure);
-            trackerPipeline.ApplyCurrentBuffer(skStructure);
+            if(trackerPipeline.ShouldApplyBuffer(delta))
+                trackerPipeline.ApplyCurrentBuffer(skStructure);
         }
 
         if(LoaderHub.ikLoader.HasActiveSolver()) {
             IIKSolver solver = LoaderHub.ikLoader.activeSolver.get();
             if(solver.SupportsSKJoints()) {
 
-                SKJoint start = skStructure.Find(controlledBoneStart);
-                SKJoint end = skStructure.Find(controlledBoneEffector);
-                end.SetTarget(cursorBoneTarget);
+//                SKJoint start = skStructure.Find(controlledBoneStart);
+//                SKJoint end = skStructure.Find(controlledBoneEffector);
+//                end.SetTarget(cursorBoneTarget);
+                SKJoint start = TrackedBones.HairRootBone();
+                SKJoint end = TrackedBones.HairTerminalBone();
 
-                solver.Solve(new SKChain(start, end));
+                if(ArrayUtils.NotNull(start, end))
+                    solver.Solve(new SimpleSKChain(start, end));
 
             }else if(solver.SupportsTree()) {
                 BoneNode start = boneStructure.Find(controlledBoneStart);
@@ -604,23 +751,61 @@ public class TrackingSpace extends AbstractScreen {
                 solver.Solve(BoneNode.FromBoneChain(bone), Collections.singletonList(cursorBoneTarget));
 
 //                solver.Solve(ball_r, cursorBoneTarget);
-            }else solver.Solve(boneChain, cursorBoneTarget);
+            }else {
+                if(boneChain != null)
+                    solver.Solve(boneChain, cursorBoneTarget);
+            }
         }
 
-        destinationEffect.part.position.set(cursorBoneTarget.cpy().sub(.5f));
+//        destinationEffect.part.position.set(cursorBoneTarget.cpy().sub(.5f));
 
-        renderer.setProjectionMatrix(camera.combined);
 //        RenderBoneChain(boneChain);
 //        RenderBoneStructure(boneStructure);
 
 //        RenderBones(boneStructure);
 
-        boolean drawWithMesh = false;
-        if(drawWithMesh) {
-            modelBatch.begin(camera);
-            SKUtils.RenderMesh(skStructure, modelBatch, environment);
-            modelBatch.end();
-        }else SKUtils.Render(skStructure, renderer);
+//        shapeFbo.begin();
+//        screenShader.begin();
+//        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+//
+//        Gdx.gl.glActiveTexture(GL_TEXTURE10);
+//        Gdx.gl.glBindTexture(GL_TEXTURE_2D, fbo.getDepthBufferHandle());
+//        screenShader.setUniformi("u_depthTex", 10);
+//        Gdx.gl.glActiveTexture(GL_TEXTURE0);
+//        screenShader.end();
+//
+//        ShaderProgram defShader = stage.getBatch().getShader();
+//        stage.getBatch().setShader(screenShader);
+//        stage.getBatch().begin();
+//        stage.getBatch().draw(defTex, 0, 0, width, height);
+//        stage.getBatch().end();
+//        stage.getBatch().setShader(defShader);
+//        shapeFbo.end();
+
+
+//        shapeRenderShader.begin();
+//        shapeRenderShader.setUniformi("u_depth", 10);
+//        shapeFbo.getColorBufferTexture().bind(10);
+
+//        Gdx.gl.glDepthMask(false);
+//        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+//        Gdx.gl.glDepthFunc(GL20.GL_ALWAYS);
+//        shapeRenderShader.end();
+
+        renderer.setProjectionMatrix(camera.combined);
+        fbo.begin();
+        Gdx.gl.glEnable(GL_DEPTH_TEST);
+        Gdx.gl.glDepthFunc(GL20.GL_LESS);
+        SKUtils.Render(skStructure, renderer, false);
+        Gdx.gl.glDepthFunc(GL20.GL_GREATER);
+        SKUtils.Render(skStructure, renderer, true);
+        Gdx.gl.glDisable(GL_DEPTH_TEST);
+        fbo.end();
+    }
+
+    @Override
+    protected Texture GetShapeTexture() {
+        return shapeFbo.getColorBufferTexture();
     }
 
     @Override
@@ -631,16 +816,45 @@ public class TrackingSpace extends AbstractScreen {
         camera.up.set(0, 1, 0);
         camera.update();
 
-
         if(renderer != null) {
             renderer.dispose();
             renderer = null;
         }
 
+        if(shapeFbo != null) {
+            shapeFbo.dispose();
+            shapeFbo = null;
+        }
+
+        shapeFbo = CreateFrameBuffer(Pixmap.Format.RGBA8888, 1, this.width, this.height, false);
+//        renderer = new ShapeRenderer(5000, shapeRenderShader);
         renderer = new ShapeRenderer();
 
-        leftSidebar.Resize(stage, width, height);
-        rightSidebar.Resize(stage, width, height);
+        StatusBar statusBar = stage.GetStatusBar();
+        float menuBarHeight = stage.GetMenuBar().getTable().getHeight();
+        float statusBarHeight = statusBar.getHeight();
 
+        leftSidebar.setY(statusBarHeight);
+        rightSidebar.setY(statusBarHeight);
+        leftSidebar.Resize(stage, width, (int) (height - (menuBarHeight + statusBarHeight)));
+        rightSidebar.Resize(stage, width, (int) (height - (menuBarHeight + statusBarHeight)));
+
+        statusBar.setWidth(width);
+        statusBar.setPosition(0, 0);
+    }
+
+    @Override
+    public void hide() {
+        super.hide();
+        Launcher.fileDroppedListeners.remove(onFilesDroppedFunc);
+        if(shapeRenderShader != null) {
+            shapeRenderShader.dispose();
+            shapeRenderShader = null;
+        }
+
+        if(shapeFbo != null) {
+            shapeFbo.dispose();
+            shapeFbo = null;
+        }
     }
 }

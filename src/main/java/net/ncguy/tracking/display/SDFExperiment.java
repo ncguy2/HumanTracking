@@ -214,6 +214,11 @@ public class SDFExperiment extends AbstractScreen {
     }
 
     @Override
+    protected Texture GetShapeTexture() {
+        return null;
+    }
+
+    @Override
     public void resize(int width, int height) {
         super.resize(width, height);
         camera.update(true);

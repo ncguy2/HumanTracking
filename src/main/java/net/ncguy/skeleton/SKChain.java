@@ -1,6 +1,7 @@
 package net.ncguy.skeleton;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class SKChain {
 
@@ -32,11 +33,26 @@ public class SKChain {
         return amt;
     }
 
+    public void Iterate(Consumer<SKJoint> func) {
+        int count = Count();
+        for(int i = 0; i < count - 1; i++)
+            func.accept(Get(i));
+    }
+
     public void Iterate(BiConsumer<SKJoint, SKJoint> func) {
         int count = Count();
         for(int i = 0; i < count - 1; i++) {
             SKJoint here = Get(i);
             SKJoint next = Get(i + 1);
+            func.accept(here, next);
+        }
+    }
+
+    public void InverseIterate(BiConsumer<SKJoint, SKJoint> func) {
+        int count = Count();
+        for(int i = count-1; i > 0; i--) {
+            SKJoint here = Get(i);
+            SKJoint next = Get(i - 1);
             func.accept(here, next);
         }
     }

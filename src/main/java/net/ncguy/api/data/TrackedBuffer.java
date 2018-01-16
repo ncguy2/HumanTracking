@@ -31,7 +31,7 @@ public class TrackedBuffer extends ArrayList<TrackedPoint> {
         return sb.toString();
     }
 
-    public TrackedPoint Get(TrackedPoint.Hint... hints) {
+    public TrackedPoint Get(TrackedPoint.Hint hint) {
 
         if(isEmpty()) return null;
 
@@ -50,11 +50,9 @@ public class TrackedBuffer extends ArrayList<TrackedPoint> {
         for (TrackedPoint p : points) {
             int score = 0;
 
-            for (TrackedPoint.Hint hint : hints) {
                 if(hint == null) continue;
                 if(p.hints != null && p.hints.contains(hint))
                     score += hint.Score();
-            }
 
             if(score > bestScore) {
                 bestScore = score;
@@ -110,6 +108,20 @@ public class TrackedBuffer extends ArrayList<TrackedPoint> {
         if(bufferEnd != BUFFER_END)
             throw new DeserializationException("Invalid end tag found");
 
+    }
+
+    @Override
+    public boolean add(TrackedPoint trackedPoint) {
+        TrackedPoint.Hint hint = trackedPoint.GetPrimaryHint();
+
+        for (int i = 0; i < this.size(); i++) {
+            if(get(i).GetPrimaryHint().equals(hint)) {
+                set(i, trackedPoint);
+                return true;
+            }
+        }
+
+        return super.add(trackedPoint);
     }
 
     public TrackedPoint add(Vector2 vec) {

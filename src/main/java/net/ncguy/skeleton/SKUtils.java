@@ -114,42 +114,67 @@ public class SKUtils {
         RenderMesh(bone.end, batch, env);
     }
 
-    public static void Render(SKJoint skStructure, ShapeRenderer renderer) {
+    public static void Render(SKJoint skStructure, ShapeRenderer renderer, boolean invertColour) {
+
+        if(skStructure == null) return;
+
         renderer.begin(ShapeRenderer.ShapeType.Line);
-        RenderBones(skStructure, renderer);
+        RenderBones(skStructure, renderer, invertColour);
         renderer.end();
 
         if(TrackingSpace.showBoneLocations.get()) {
             renderer.begin(ShapeRenderer.ShapeType.Filled);
-            renderer.setColor(Reference.Colour.RendererColours.BONE_LOCATION_COLOUR);
-            RenderJoints(skStructure, renderer);
+            RenderJoints(skStructure, renderer, invertColour);
             renderer.end();
         }
     }
 
-    private static void RenderJoints(SKJoint joint, ShapeRenderer renderer) {
-        Vector3 s = new Vector3(.1f, .1f, .1f);
+    private static void RenderJoints(SKJoint joint, ShapeRenderer renderer, boolean invertColour) {
+
+        if(joint == null) return;
+
+        Vector3 s = new Vector3(.25f, .25f, .25f);
+
+        if(joint.equals(TrackedBones.SelectedBone())) {
+            renderer.setColor(Reference.Colour.RendererColours.BONE_LOCATION_ACTIVE_COLOUR);
+            s.scl(5f);
+        }else renderer.setColor(Reference.Colour.RendererColours.BONE_LOCATION_COLOUR);
+
+        if(invertColour)
+            renderer.getColor().set(Color.WHITE.cpy().sub(renderer.getColor()));
+        renderer.getColor().a = 1.f;
+
         Vector3 d = s.cpy().scl(.5f);
         Vector3 p = joint.GetPosition().cpy().sub(d.x, d.y, -d.z);
         renderer.box(p.x, p.y, p.z, s.x, s.y, s.z);
-        joint.GetChildJoints().forEach(j -> RenderJoints(j, renderer));
+
+
+        joint.GetChildJoints().forEach(j -> RenderJoints(j, renderer, invertColour));
     }
 
-    private static void RenderBones(SKJoint joint, ShapeRenderer renderer) {
+    private static void RenderBones(SKJoint joint, ShapeRenderer renderer, boolean invertColour) {
+        if(joint == null) return;
 
         if(TrackingSpace.showBoneDirections.get()) {
             renderer.setColor(Reference.Colour.RendererColours.BONE_DIRECTION_PARENTED_COLOUR);
+            if(invertColour)
+                renderer.getColor().set(Color.WHITE.cpy().sub(renderer.getColor()));
+            renderer.getColor().a = 1.f;
             renderer.line(joint.GetPosition(), joint.GetDirection());
         }
 
         if(TrackingSpace.showBoneConnections.get()) {
-            renderer.setColor(Reference.Colour.RendererColours.BONE_DIRECTION_PARENTED_COLOUR);
+            renderer.setColor(Reference.Colour.RendererColours.BONE_DIRECTION_PARENTED_COLOUR.cpy());
+            if(invertColour)
+                renderer.getColor().set(Color.WHITE.cpy().sub(renderer.getColor()));
+            renderer.getColor().a = 1.f;
             joint.childrenBones.forEach(b -> RenderBone(b, renderer));
         }
-        joint.GetChildJoints().forEach(j -> RenderBones(j, renderer));
+        joint.GetChildJoints().forEach(j -> RenderBones(j, renderer, invertColour));
     }
 
     private static void RenderBone(SKBone bone, ShapeRenderer renderer) {
+        if(bone == null) return;
         renderer.line(bone.start.GetPosition(), bone.end.GetPosition());
     }
 

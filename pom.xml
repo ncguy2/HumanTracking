@@ -8,11 +8,15 @@
     <artifactId>HumanTrackingGdx</artifactId>
     <packaging>pom</packaging>
     <version>0.0.1</version>
+
     <modules>
         <module>IKSolver</module>
         <module>Diagnostics</module>
         <module>Trackers/TrackerAlpha</module>
-        <module>Caliko</module>
+        <module>Trackers/TrackerPython</module>
+        <module>AssetHandler</module>
+        <module>FABRIK</module>
+        <module>SkeletonEditor</module>
     </modules>
 
     <properties>
@@ -99,6 +103,30 @@
             <artifactId>gdx-freetype-platform</artifactId>
             <version>${gdx.version}</version>
             <classifier>natives-desktop</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opencv</groupId>
+            <artifactId>opencv</artifactId>
+            <version>3.3.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/opencv-331.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>aurelienribon</groupId>
+            <artifactId>tweenengine</artifactId>
+            <version>6.3.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/tween-engine-api.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>bulenkov</groupId>
+            <artifactId>Darcula</artifactId>
+            <version>1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/darcula.jar</systemPath>
         </dependency>
 
     </dependencies>

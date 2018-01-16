@@ -40,6 +40,25 @@ public abstract class ModuleLoader<T extends BaseModuleInterface> {
 
     public void Load(ModularStage stage, File jar) {
         List<T> items = loaded.get(jar);
+
+        List<DependencyNode<T>> nodeList = items.stream()
+                .map(DependencyNode::new)
+                .collect(Collectors.toList());
+
+        nodeList.forEach(n -> {
+            Class<? extends BaseModuleInterface>[] dependencies = n.module.Dependencies();
+            for (Class<? extends BaseModuleInterface> dep : dependencies) {
+                Optional<DependencyNode<T>> first = nodeList.stream().filter(d -> d.module.getClass().equals(dep)).findFirst();
+                if(first.isPresent()) {
+                    n.AddDependency(first.get());
+                }else{
+                    n.canLoad = false;
+                }
+            }
+        });
+
+        nodeList.forEach(n -> System.out.println(n.toString()));
+
         for (T item : items) {
             Log(ILogger.LogLevel.DEBUG, "[%s] %s loaded from %s", getClass().getSimpleName(), item.Name(), jar.getName());
             item.SetJarFileLocation(jar.getAbsolutePath());
@@ -92,6 +111,55 @@ public abstract class ModuleLoader<T extends BaseModuleInterface> {
         List<T> items = new ArrayList<>();
         loader.forEach(items::add);
         return items;
+    }
+
+    public static class DependencyNode<T extends BaseModuleInterface> {
+
+        public String name;
+        public T module;
+        public List<DependencyNode> dependsOn;
+        public boolean canLoad;
+
+        public DependencyNode(T module) {
+            this(module.Name(), module);
+        }
+
+
+        public DependencyNode(String name, T module) {
+            this.name = name;
+            this.module = module;
+            this.dependsOn = new ArrayList<>();
+            this.canLoad = true;
+        }
+
+        public void AddDependency(DependencyNode... nodes) {
+            Collections.addAll(this.dependsOn, nodes);
+        }
+
+        @Override
+        public String toString() {
+            if(dependsOn.isEmpty())
+                return name;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(name).append(" -> ");
+
+            if(dependsOn.size() > 1)
+                sb.append("[");
+
+            for (int i = 0; i < dependsOn.size(); i++) {
+                DependencyNode node = dependsOn.get(i);
+                sb.append(node.name);
+                if(i != dependsOn.size()- 1)
+                    sb.append(", ");
+            }
+
+            if(dependsOn.size() > 1)
+                sb.append("]");
+
+
+            return sb.toString();
+        }
     }
 
 }

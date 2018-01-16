@@ -16,6 +16,10 @@ public interface IPanel {
     void Assemble();
     void Style();
 
+    default String GetTooltip() {
+        return "";
+    }
+
     String GetTitle();
     Table GetRootTable();
 

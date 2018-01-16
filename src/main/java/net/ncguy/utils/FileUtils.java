@@ -1,8 +1,10 @@
 package net.ncguy.utils;
 
-import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import net.ncguy.utils.tools.FBXConv;
 
 import java.io.File;
@@ -14,43 +16,104 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class FileUtils {
 
-    static AssetManager assets = new AssetManager();
-
     public static Model LoadModel(String filePath) {
+        return LoadModel(filePath, true);
+    }
 
-        String path = filePath + ".g3dj";
+    public static Model LoadModel(String filePath, boolean appendToPath) {
 
-        if(assets.isLoaded(path))
-            return assets.get(path, Model.class);
+        filePath = filePath.replace("\\", "/");
+
+        String path = filePath;
+        if(appendToPath)
+            path += ".g3dj";
+
+        AssetUtils assets = AssetUtils.instance();
+
+        if(assets.IsLoaded(path))
+            return assets.Get(path, Model.class);
 
         if(filePath.toLowerCase().endsWith(".fbx") || filePath.toLowerCase().endsWith(".obj")) {
             File file = new File(path);
-            if(!Files.exists(file.toPath()))
-                new FBXConv().InvokeSafe(System.out::println, "-f", "-v", filePath, path);
+            if(!Files.exists(file.toPath())) {
+                new FBXConv().InvokeSafeLong("FBX Conversion: ", "Converting \"" + filePath + "\" to usable format", null, "-f", "-v", filePath, path);
+            }
         }
 
-
-        assets.load(path, Model.class);
-        assets.finishLoadingAsset(path);
-
-//        FileHandle handle = Gdx.files.absolute(new File(path).getAbsolutePath());
-//        JsonReader reader = new JsonReader();
-//        G3dModelLoader loader = new G3dModelLoader(reader);
-//        ModelData modelData = loader.parseModel(handle);
-
-        Model model = assets.get(path, Model.class);
+        Model model = assets.Get(path, Model.class);
 
         model.materials.forEach(mtl -> {
             if(mtl.has(BlendingAttribute.Type)) {
                 BlendingAttribute attr = (BlendingAttribute) mtl.get(BlendingAttribute.Type);
                 attr.opacity = 1.f;
-            }
+            }else mtl.set(new BlendingAttribute(1.f));
         });
 
         return model;
+    }
+
+    public static void LoadModelAsync(String filePath, Consumer<Model> func) {
+        LoadModelAsync(filePath, true, func);
+    }
+
+    public static void LoadModelAsync(String filePath, boolean appendToPath, Consumer<Model> func) {
+        filePath = filePath.replace("\\", "/");
+
+        String path = filePath;
+        if(appendToPath)
+            path += ".g3dj";
+
+        AssetUtils assets = AssetUtils.instance();
+
+        if(assets.IsLoaded(path)) {
+            func.accept(assets.Get(path, Model.class));
+            return;
+        }
+
+        if(filePath.toLowerCase().endsWith(".fbx") || filePath.toLowerCase().endsWith(".obj")) {
+            File file = new File(path);
+            if(!Files.exists(file.toPath())) {
+                new FBXConv().InvokeSafeLong("FBX Conversion: ", "Converting \"" + filePath + "\" to usable format", null, "-f", "-v", filePath, path);
+            }
+        }
+
+        assets.GetAsync(path, Model.class, model -> {
+            model.materials.forEach(mtl -> {
+                if(mtl.has(TextureAttribute.Diffuse)) {
+                    TextureAttribute attr = (TextureAttribute) mtl.get(TextureAttribute.Diffuse);
+                    System.out.println(attr);
+                    attr.textureDescription.magFilter = Texture.TextureFilter.Nearest;
+                    attr.textureDescription.minFilter = Texture.TextureFilter.Nearest;
+                }
+
+                if(mtl.has(TextureAttribute.Emissive)) {
+                    TextureAttribute attr = (TextureAttribute) mtl.get(TextureAttribute.Emissive);
+                    System.out.println(attr);
+                    attr.textureDescription.magFilter = Texture.TextureFilter.Nearest;
+                    attr.textureDescription.minFilter = Texture.TextureFilter.Nearest;
+                }
+
+                if(mtl.has(BlendingAttribute.Type)) {
+                    BlendingAttribute attr = (BlendingAttribute) mtl.get(BlendingAttribute.Type);
+                    attr.opacity = .99f;
+
+//                    attr.sourceFunction = GL20.GL_SRC_ALPHA;
+//                    attr.destFunction = GL20.GL_ONE_MINUS_SRC_ALPHA;
+//                    attr.opacity = .99f;
+//                    attr.blended = true;
+                    mtl.set(new FloatAttribute(FloatAttribute.AlphaTest, .1f));
+                }
+
+//                mtl.set(new DepthTestAttribute(GL20.GL_LESS));
+            });
+
+            func.accept(model);
+        });
+
     }
 
     public static boolean WriteByteBuffer(ByteBuffer buffer, OutputStream stream) {

@@ -2,9 +2,8 @@
   <artifact type="jar" name="plugin.tracker.TrackerAlpha:jar">
     <output-path>$PROJECT_DIR$/working/Plugins</output-path>
     <root id="archive" name="plugin.tracker.TrackerAlpha.jar">
-      <element id="module-output" name="plugin.tracker.TrackerAlpha" />
+      <element id="module-output" name="TrackerAlpha" />
       <element id="extracted-dir" path="$PROJECT_DIR$/Trackers/TrackerAlpha/libs/openNI/org.OpenNI.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/Trackers/TrackerAlpha/libs/opencv-331.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

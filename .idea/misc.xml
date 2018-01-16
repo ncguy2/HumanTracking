@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="LibGDXSkins">
+    <file url="file://$PROJECT_DIR$/src/main/resources/skins/cloud/cloud-form-ui.json" />
+  </component>
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>
@@ -10,11 +13,12 @@
     <option name="ignoredFiles">
       <set>
         <option value="$PROJECT_DIR$/Caliko/pom.xml" />
+        <option value="$PROJECT_DIR$/Telemetry/pom.xml" />
       </set>
     </option>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" backward_compatibility_performed="true" />
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>

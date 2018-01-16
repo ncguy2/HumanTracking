@@ -6,24 +6,34 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="AssetHandler" />
         <module name="Diagnostics" />
+        <module name="FABRIK" />
         <module name="IKSolver" />
         <module name="plugin.Diagnostics" />
         <module name="plugin.IKSolver" />
         <module name="plugin.tracker.TrackerAlpha" />
         <module name="plugin.tracker.TrackerPython" />
+        <module name="SkeletonEditor" />
         <module name="TrackerAlpha" />
         <module name="TrackerKinect" />
         <module name="TrackerPython" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="AssetHandler" target="1.8" />
+      <module name="Diagnostics" target="1.8" />
+      <module name="FABRIK" target="1.8" />
       <module name="HumanTrackingGDX" target="1.8" />
+      <module name="IKSolver" target="1.8" />
       <module name="plugin.Caliko" target="1.8" />
       <module name="plugin.Diagnostics" target="1.8" />
       <module name="plugin.IKSolver" target="1.8" />
       <module name="plugin.tracker.TrackerAlpha" target="1.8" />
       <module name="plugin.tracker.TrackerPython" target="1.8" />
+      <module name="SkeletonEditor" target="1.8" />
+      <module name="Telemetry" target="1.8" />
+      <module name="TrackerAlpha" target="1.8" />
       <module name="TrackerPython" target="1.8" />
     </bytecodeTargetLevel>
   </component>

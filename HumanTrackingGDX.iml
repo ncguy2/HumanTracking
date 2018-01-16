@@ -57,5 +57,32 @@
     <orderEntry type="library" name="Maven: org.lwjgl.lwjgl:lwjgl_util:2.9.2" level="project" />
     <orderEntry type="library" name="Maven: com.badlogicgames.gdx:gdx-backend-headless:1.9.7" level="project" />
     <orderEntry type="library" name="Maven: com.badlogicgames.gdx:gdx-freetype-platform:natives-desktop:1.9.7" level="project" />
+    <orderEntry type="module-library">
+      <library name="Maven: org.opencv:opencv:3.3.1">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/libs/opencv-331.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: aurelienribon:tweenengine:6.3.3">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/libs/tween-engine-api.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: bulenkov:Darcula:1">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/libs/darcula.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

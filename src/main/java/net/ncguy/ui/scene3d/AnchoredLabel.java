@@ -7,11 +7,14 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 
 import java.util.function.Supplier;
 
 public class AnchoredLabel {
+
+    public static final SimpleBooleanProperty shouldRenderLabel = new SimpleBooleanProperty(true);
 
     protected SimpleStringProperty label;
     protected Vector3 anchor;
@@ -60,34 +63,41 @@ public class AnchoredLabel {
     }
 
     public void RenderText(SpriteBatch batch) {
-        font.draw(batch, label.get(), screenPosition.x, screenPosition.y);
-        if(subTextSupplier != null) {
-            String s = subTextSupplier.get();
-            font.draw(batch, s, screenPosition.x, screenPosition.y + height);
+
+        if(shouldRenderLabel.get()) {
+
+            font.draw(batch, label.get(), screenPosition.x, screenPosition.y);
+            if (subTextSupplier != null) {
+                String s = subTextSupplier.get();
+                font.draw(batch, s, screenPosition.x, screenPosition.y + height);
+            }
         }
     }
 
     public void RenderLines(ShapeRenderer renderer, Camera camera) {
 
-        Vector3 pos = screenPosition.cpy().sub(0, height + 2, 0);
-        pos.z = 0;
-        Vector3 project = camera.project(this.anchor.cpy());
+        if(shouldRenderLabel.get()) {
+
+            Vector3 pos = screenPosition.cpy().sub(0, height + 2, 0);
+            pos.z = 0;
+            Vector3 project = camera.project(this.anchor.cpy());
 
 
-        Vector3 left = pos.cpy();
-        Vector3 right = pos.cpy().add(width, 0, 0);
+            Vector3 left = pos.cpy();
+            Vector3 right = pos.cpy().add(width, 0, 0);
 
 
-        Vector3 best;
-        if(left.dst(project) < right.dst(project))
-            best = left;
-        else best = right;
+            Vector3 best;
+            if (left.dst(project) < right.dst(project))
+                best = left;
+            else best = right;
 
-        renderer.line(pos.cpy(), right);
+            renderer.line(pos.cpy(), right);
 
-        project.z = 0;
+            project.z = 0;
 
-        renderer.line(best, project);
+            renderer.line(best, project);
+        }
     }
 
 }

@@ -19,4 +19,8 @@ public abstract interface BaseModuleInterface {
 
     default void SetJarFileLocation(String loc) {}
 
+    default Class<? extends BaseModuleInterface>[] Dependencies() {
+        return new Class[0];
+    }
+
 }

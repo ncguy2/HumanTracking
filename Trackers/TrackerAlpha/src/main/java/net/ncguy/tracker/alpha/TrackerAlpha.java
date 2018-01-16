@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.utils.SharedLibraryLoader;
 import com.kotcrab.vis.ui.widget.Menu;
 import javafx.beans.property.SimpleBooleanProperty;
 import net.ncguy.api.data.TrackedBuffer;
@@ -15,11 +14,9 @@ import net.ncguy.tracker.alpha.tracking.TrackerCore;
 import net.ncguy.tracker.alpha.ui.DebugPanel;
 import net.ncguy.tracking.display.ModularStage;
 import net.ncguy.ui.detachable.DetachablePanel;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.File;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
@@ -201,20 +198,20 @@ public class TrackerAlpha implements ITracker {
 
     @Override
     public void Startup() {
-        String cvLibLocation = Core.NATIVE_LIBRARY_NAME;
-        String mitieLibLocation = "javamitie";
-//        new SharedLibraryLoader(TrackerAlpha.jarFileLocation).load(nativeLibraryName);
-//        System.loadLibrary(nativeLibraryName);
-
-        String formatPattern = "libs/%s/%s.dll";
-
-        String platformDir = "x86";
-        if(SharedLibraryLoader.is64Bit)
-            platformDir = "x64";
-
-        File file = new File(String.format(formatPattern, platformDir, cvLibLocation));
-//        NativeUtils.LoadLibrary(file);
-        System.loadLibrary(cvLibLocation);
+//        String cvLibLocation = Core.NATIVE_LIBRARY_NAME;
+//        String mitieLibLocation = "javamitie";
+////        new SharedLibraryLoader(TrackerAlpha.jarFileLocation).load(nativeLibraryName);
+////        System.loadLibrary(nativeLibraryName);
+//
+//        String formatPattern = "libs/%s/%s.dll";
+//
+//        String platformDir = "x86";
+//        if(SharedLibraryLoader.is64Bit)
+//            platformDir = "x64";
+//
+//        File file = new File(String.format(formatPattern, platformDir, cvLibLocation));
+////        NativeUtils.LoadLibrary(file);
+//        System.loadLibrary(cvLibLocation);
 //        file = new File(String.format(formatPattern, platformDir, mitieLibLocation));
 //        NativeUtils.LoadLibrary(file);
 

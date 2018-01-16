@@ -7,6 +7,8 @@ public class Bone {
 
     protected transient BoneNode structure;
 
+    public boolean propagateToChildren = true;
+
     public boolean hasParent = false;
 
     protected float length;
@@ -95,6 +97,8 @@ public class Bone {
         SetDirection(vec.x, vec.y, vec.z);
     }
 
+    public void Update() {}
+
     public void SetDirection(float x, float y, float z) {
         direction.set(x, y, z);
     }
@@ -107,4 +111,43 @@ public class Bone {
     public void SetTarget(Vector3 newTarget) {
         this.target.set(newTarget);
     }
+
+    public void SetScale(float x, float y, float z) {
+
+    }
+
+    public Vector3 TransformHomePosition(Vector3 pos) {
+        return pos.cpy();
+    }
+
+    public Vector3 TransformHomeDirection(Vector3 dir) {
+        return dir.cpy();
+    }
+
+    public Vector3 InverseTransformHomePosition(Vector3 pos) {
+        return pos.cpy();
+    }
+
+    public Vector3 InverseTransformHomeDirection(Vector3 dir) {
+        return dir.cpy();
+    }
+
+    public Vector3 Transform(Vector3 vec) {
+        return vec.cpy();
+    }
+
+    public Vector3 InvTransform(Vector3 vec) {
+        return vec.cpy();
+    }
+
+    public Vector3 GetModelPosition() {
+        return position;
+    }
+
+    public void SetModelPosition(Vector3 pos) {
+        position.set(pos);
+    }
+
+
+
 }

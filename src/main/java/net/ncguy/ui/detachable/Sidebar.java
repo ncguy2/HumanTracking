@@ -23,7 +23,7 @@ public class Sidebar extends VisTable implements IPanel {
     float hiddenX;
     boolean isHidden;
 
-    float desiredWidth = 192;
+    float desiredWidth = 320f;
     float btnWidth = 20;
     float animDuration = .15f;
 
@@ -105,6 +105,10 @@ public class Sidebar extends VisTable implements IPanel {
         });
     }
 
+    public boolean IsOpenable() {
+        return tabContainer.container.getTabs().size > 0;
+    }
+
     @Override
     public void Assemble() {
         if(btnOnLeft) {
@@ -136,7 +140,13 @@ public class Sidebar extends VisTable implements IPanel {
     }
 
     public Sidebar Resize(ModularStage stage, int width, int height) {
-        setSize(desiredWidth + btnWidth, height - stage.GetMenuBar().getTable().getHeight());
+
+        float desiredWidth = this.desiredWidth;
+        desiredWidth = 320f;
+        if(desiredWidth < 1.f)
+            desiredWidth = width * desiredWidth;
+
+        setSize(desiredWidth + btnWidth, height);
         if(btnOnLeft) {
             // On right of screen
             visibleX = width - (desiredWidth + btnWidth);

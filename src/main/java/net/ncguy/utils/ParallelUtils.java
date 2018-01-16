@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 public class ParallelUtils {
 
     static ForkJoinPool pool;
-    static ForkJoinPool Pool() {
+    public static ForkJoinPool Pool() {
         if (pool == null)
             pool = new ForkJoinPool();
         return pool;

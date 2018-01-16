@@ -2,13 +2,14 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/AssetHandler/AssetHandler.iml" filepath="$PROJECT_DIR$/AssetHandler/AssetHandler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Diagnostics/Diagnostics.iml" filepath="$PROJECT_DIR$/Diagnostics/Diagnostics.iml" group="plugin" />
+      <module fileurl="file://$PROJECT_DIR$/FABRIK/FABRIK.iml" filepath="$PROJECT_DIR$/FABRIK/FABRIK.iml" group="plugin" />
       <module fileurl="file://$PROJECT_DIR$/HumanTrackingGDX.iml" filepath="$PROJECT_DIR$/HumanTrackingGDX.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Diagnostics/plugin.Diagnostics.iml" filepath="$PROJECT_DIR$/Diagnostics/plugin.Diagnostics.iml" />
-      <module fileurl="file://$PROJECT_DIR$/FABRIK/plugin.FABRIK.iml" filepath="$PROJECT_DIR$/FABRIK/plugin.FABRIK.iml" />
-      <module fileurl="file://$PROJECT_DIR$/IKSolver/plugin.IKSolver.iml" filepath="$PROJECT_DIR$/IKSolver/plugin.IKSolver.iml" />
-      <module fileurl="file://$PROJECT_DIR$/SkeletonEditor/plugin.SkeletonEditor.iml" filepath="$PROJECT_DIR$/SkeletonEditor/plugin.SkeletonEditor.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Trackers/TrackerAlpha/plugin.tracker.TrackerAlpha.iml" filepath="$PROJECT_DIR$/Trackers/TrackerAlpha/plugin.tracker.TrackerAlpha.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Trackers/TrackerPython/plugin.tracker.TrackerPython.iml" filepath="$PROJECT_DIR$/Trackers/TrackerPython/plugin.tracker.TrackerPython.iml" />
+      <module fileurl="file://$PROJECT_DIR$/IKSolver/IKSolver.iml" filepath="$PROJECT_DIR$/IKSolver/IKSolver.iml" group="plugin" />
+      <module fileurl="file://$PROJECT_DIR$/SkeletonEditor/SkeletonEditor.iml" filepath="$PROJECT_DIR$/SkeletonEditor/SkeletonEditor.iml" group="plugin" />
+      <module fileurl="file://$PROJECT_DIR$/Trackers/TrackerAlpha/TrackerAlpha.iml" filepath="$PROJECT_DIR$/Trackers/TrackerAlpha/TrackerAlpha.iml" group="plugin/tracker" />
+      <module fileurl="file://$PROJECT_DIR$/Trackers/TrackerPython/TrackerPython.iml" filepath="$PROJECT_DIR$/Trackers/TrackerPython/TrackerPython.iml" group="plugin/tracker" />
     </modules>
   </component>
 </project>

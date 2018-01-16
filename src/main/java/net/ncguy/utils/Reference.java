@@ -11,6 +11,7 @@ public class Reference {
         public static final float defaultVal = .5f;
 
         public static final Color DEFAULT_GREY = new Color(.32f, .32f, .32f, 1.f);
+        public static final Color HOVER_GREY = DEFAULT_GREY.cpy().sub(.1f, .1f, .1f, 1f);
         public static final Color HOVER_COLOUR = FromHue(hoverGlowHue);
 
         public static Color FromHue(float hue) {
@@ -27,7 +28,7 @@ public class Reference {
             public static final Color BONE_DIRECTION_PARENTED_COLOUR = Color.CYAN.cpy();
             public static final Color BONE_DIRECTION_ORPHANED_COLOUR = Color.WHITE.cpy();
             public static final Color BONE_LOCATION_COLOUR = Color.WHITE.cpy();
-            public static final Color BONE_LOCATION_ACTIVE_COLOUR = Color.CORAL.cpy();
+            public static final Color BONE_LOCATION_ACTIVE_COLOUR = Color.RED.cpy();
             public static final Color IK_CURSOR_TARGET_COLOUR = Color.GOLD.cpy();
         }
 

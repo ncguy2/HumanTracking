@@ -2,7 +2,7 @@
   <artifact type="jar" name="plugin.SkeletonEditor:jar">
     <output-path>$PROJECT_DIR$/working/Plugins</output-path>
     <root id="archive" name="plugin.SkeletonEditor.jar">
-      <element id="module-output" name="plugin.SkeletonEditor" />
+      <element id="module-output" name="SkeletonEditor" />
       <element id="dir-copy" path="$PROJECT_DIR$/SkeletonEditor/src/main/resources" />
     </root>
   </artifact>

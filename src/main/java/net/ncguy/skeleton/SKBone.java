@@ -52,6 +52,10 @@ public class SKBone {
         return length;
     }
 
+    public boolean IsValid() {
+        return this.start != null && this.end != null;
+    }
+
     /**
      * Null-safe variant of instance {@link net.ncguy.skeleton.SKBone#Other(net.ncguy.skeleton.SKJoint)}
      */

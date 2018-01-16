@@ -17,6 +17,8 @@ import java.util.function.Consumer;
 
 public class Node implements Disposable {
 
+    public SimpleObjectProperty<PrimitiveType> wireframePrimitiveType = new SimpleObjectProperty<>(PrimitiveType.LINE_STRIP);
+
     ModularModelInstance instance;
     public Set<Node> children;
 
@@ -105,7 +107,6 @@ public class Node implements Disposable {
     public void AddChild(Node node) {
         children.add(node);
     }
-
     public void RemoveChild(Node node) {
         children.remove(node);
     }
@@ -124,7 +125,7 @@ public class Node implements Disposable {
         }
 
         if(drawWireframe.get()) {
-            instance.SetPrimitiveType(PrimitiveType.LINE_STRIP);
+            instance.SetPrimitiveType(wireframePrimitiveType.get());
             batch.render(instance, env);
         }
 

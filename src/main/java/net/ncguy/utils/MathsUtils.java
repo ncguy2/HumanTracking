@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import javafx.beans.NamedArg;
 
 public class MathsUtils {
 
@@ -200,7 +201,7 @@ public class MathsUtils {
     public static Quaternion ToQuaternion(Vector3 dir) {
 
         Vector3 forward = dir.cpy().nor();
-        Vector3 right = Vector3.Y.cpy().crs(forward);
+        Vector3 right = forward.cpy().crs(Vector3.Y);
         Vector3 up = forward.cpy().crs(right);
 
         Matrix3 m = new Matrix3();
@@ -209,13 +210,13 @@ public class MathsUtils {
         m.val[Matrix3.M01] = forward.y;
         m.val[Matrix3.M02] = forward.z;
 
-        m.val[Matrix3.M10] = right.x;
-        m.val[Matrix3.M11] = right.y;
-        m.val[Matrix3.M12] = right.z;
+        m.val[Matrix3.M10] = up.x;
+        m.val[Matrix3.M11] = up.y;
+        m.val[Matrix3.M12] = up.z;
 
-        m.val[Matrix3.M20] = up.x;
-        m.val[Matrix3.M21] = up.y;
-        m.val[Matrix3.M22] = up.z;
+        m.val[Matrix3.M20] = right.x;
+        m.val[Matrix3.M21] = right.y;
+        m.val[Matrix3.M22] = right.z;
 
         return new Quaternion().setFromMatrix(m);
     }
@@ -225,6 +226,32 @@ public class MathsUtils {
                 (byte)(value >>> 24),
                 (byte)(value >>> 16),
                 (byte)(value >>> 8),
-                (byte)value};
+                (byte) value
+        };
     }
+
+    public static float DistanceToLine(@NamedArg("Point") Vector2 p0, @NamedArg("Line Start") Vector2 p1, @NamedArg("Line End") Vector2 p2) {
+
+        float l2 = p1.dst2(p2);
+        if(l2 == 0.f) return p0.dst(p1);
+
+        float t = Math.max(0, Math.min(1, new Vector2(p0).cpy().sub(p1).dot(new Vector2(p2).sub(p1)) / l2));
+        Vector2 projection = p1.add(t, t).scl(new Vector2(p2).sub(p1));
+        return p0.dst(projection);
+
+//        float s = (p2.y - p1.y) * p0.x;
+//        float t = (p2.x - p1.x) * p0.y;
+//        float u = p2.x * p1.y;
+//        float v = p2.y * p1.x;
+//
+//        float n = s - t + u - v;
+//
+//        float l = (p2.y - p1.y) * (p2.y - p1.y);
+//        float m = (p2.x - p1.x) * (p2.x - p1.x);
+//
+//        float d = (float) Math.sqrt(l + m);
+//
+//        return n / d;
+    }
+
 }

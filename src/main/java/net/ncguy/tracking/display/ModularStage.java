@@ -1,5 +1,7 @@
 package net.ncguy.tracking.display;
 
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -10,17 +12,22 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.kotcrab.vis.ui.widget.Menu;
 import com.kotcrab.vis.ui.widget.MenuBar;
 import com.kotcrab.vis.ui.widget.MenuItem;
+import com.kotcrab.vis.ui.widget.file.FileChooser;
+import com.kotcrab.vis.ui.widget.file.FileChooserAdapter;
+import com.sun.javafx.collections.ObservableListWrapper;
 import net.ncguy.api.ik.BoneNode;
 import net.ncguy.tracking.utils.ReflectionUtils;
 import net.ncguy.tracking.world.Node;
 import net.ncguy.ui.LabeledSeparator;
-import net.ncguy.ui.detachable.DetachableTab;
-import net.ncguy.ui.detachable.IDetachable;
-import net.ncguy.ui.detachable.Sidebar;
-import net.ncguy.ui.detachable.TabContainer;
+import net.ncguy.ui.StatusBar;
+import net.ncguy.ui.detachable.*;
+import net.ncguy.utils.task.Task;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ModularStage extends Stage {
@@ -38,6 +45,71 @@ public class ModularStage extends Stage {
     }
 
     Map<String, Menu> menuMap = new HashMap<>();
+    public ObservableListWrapper<Task> tasks = new ObservableListWrapper<>(new ArrayList<>());
+
+    public Task AddTask(String label) {
+        Task task = new Task();
+        task.label = label;
+        return AddTask(task);
+    }
+
+    public Task AddTask(Task task) {
+        tasks.add(task);
+        return task;
+    }
+
+    public void RemoveTask(Task task) {
+        tasks.remove(task);
+    }
+
+    protected FileChooser chooser;
+
+    public void SelectFile(String title, FileChooser.Mode mode, FileChooser.SelectionMode selMode, Consumer<File> listener) {
+        SelectFile(title, mode, selMode, listener, null, null);
+    }
+
+    public void SelectFile(String title, FileChooser.Mode mode, FileChooser.SelectionMode selMode, Consumer<File> listener, Runnable cancelled) {
+        SelectFile(title, mode, selMode, listener, cancelled, null);
+    }
+
+    public void SelectFile(String title, FileChooser.Mode mode, FileChooser.SelectionMode selMode, Consumer<File> listener, FileFilter filter) {
+        SelectFile(title, mode, selMode, listener, null, filter);
+    }
+
+    public void SelectFile(String title, FileChooser.Mode mode, FileChooser.SelectionMode selMode, Consumer<File> listener, Runnable cancelled, FileFilter filter) {
+        if(chooser == null)
+             chooser = new FileChooser(mode);
+        else chooser.setMode(mode);
+
+//        chooser.setFileFilter(filter);
+        chooser.getTitleLabel().setText(title);
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setSelectionMode(selMode);
+        chooser.setListener(new FileChooserAdapter() {
+            @Override
+            public void selected(Array<FileHandle> files) {
+                FileHandle first = files.first();
+                listener.accept(first.file());
+            }
+
+            @Override
+            public void canceled() {
+                if(cancelled != null)
+                    cancelled.run();
+            }
+        });
+
+        addActor(chooser.fadeIn());
+    }
+
+    @Override
+    public void act(float delta) {
+        super.act(delta);
+        tasks.stream()
+                .filter(t -> t.progress > 1)
+                .collect(Collectors.toList())
+                .forEach(tasks::remove);
+    }
 
     public void FixMenu(Menu menu) {
         Optional<MenuBar> menuBar = ReflectionUtils.Get(menu, menu.getClass(), "menuBar", MenuBar.class);
@@ -106,6 +178,14 @@ public class ModularStage extends Stage {
         return null;
     }
 
+    public void AddPanel(IPanel panel, ModularStage.Sidebars side) {
+        AddPanel(new DetachablePanel(panel), side);
+    }
+
+    public void AddPanel(IDetachable panel, ModularStage.Sidebars side) {
+        AddTab(panel, side);
+    }
+
     public void RemoveTab(IDetachable tab) {
         RemoveTab(tab, false);
     }
@@ -115,6 +195,12 @@ public class ModularStage extends Stage {
             leftSidebar.PulseForAttention(Color.YELLOW, .2f, 1.5f, .5f);
         if(rightTabContainer.RemoveTab(tab) && notify)
             rightSidebar.PulseForAttention(Color.YELLOW, .2f, 1.5f, .5f);
+    }
+
+    public DetachablePanel AddTab(IPanel tab, Sidebars sidebar) {
+        DetachablePanel panel = new DetachablePanel(tab);
+        AddTab(panel, sidebar);
+        return panel;
     }
 
     public void AddTab(IDetachable tab, Sidebars sidebar) {
@@ -162,6 +248,17 @@ public class ModularStage extends Stage {
         }
     }
 
+    @Override
+    public boolean keyDown(int keyCode) {
+
+        if(keyCode == Input.Keys.LEFT && leftSidebar.IsOpenable())
+            leftSidebar.ToggleHidden();
+        else if(keyCode == Input.Keys.RIGHT && rightSidebar.IsOpenable())
+            rightSidebar.ToggleHidden();
+
+        return super.keyDown(keyCode);
+    }
+
     protected MenuBar menuBar;
 
     protected Sidebar leftSidebar;
@@ -169,6 +266,8 @@ public class ModularStage extends Stage {
 
     protected TabContainer leftTabContainer;
     protected TabContainer rightTabContainer;
+
+    protected StatusBar statusBar;
 
     protected Consumer<BoneNode> boneStructureSetter;
     protected Consumer<Integer> skySphereSetter;
@@ -210,6 +309,9 @@ public class ModularStage extends Stage {
     public Consumer<Integer> GetSkySphereSetter() { return skySphereSetter; }
     public void SetSkySphereSetter(Consumer<Integer> skySphereSetter) { this.skySphereSetter = skySphereSetter; }
 
+    public boolean HasStatusBar() { return statusBar != null; }
+    public StatusBar GetStatusBar() { return statusBar; }
+    public void SetStatusBar(StatusBar statusBar) { this.statusBar = statusBar; }
 
     public Optional<Node> FindNode(String name) {
         return worldNodes.stream()

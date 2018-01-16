@@ -2,7 +2,7 @@
   <artifact type="jar" name="FABRIK:jar">
     <output-path>$PROJECT_DIR$/working/Plugins</output-path>
     <root id="archive" name="FABRIK.jar">
-      <element id="module-output" name="plugin.FABRIK" />
+      <element id="module-output" name="FABRIK" />
       <element id="dir-copy" path="$PROJECT_DIR$/FABRIK/src/main/resources" />
     </root>
   </artifact>

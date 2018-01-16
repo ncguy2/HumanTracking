@@ -1,6 +1,8 @@
 package net.ncguy.api.data;
 
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import net.ncguy.utils.StringUtils;
 
 import java.util.ArrayList;
@@ -15,10 +17,23 @@ public class TrackedPoint {
     protected final Vector2 screenPos = new Vector2();
     public float angle;
 
+    public boolean isDirty = true;
+    public boolean useWorldCoords = false;
+    public Vector3 worldPos = new Vector3();
+    public Vector3 worldDir = new Vector3();
+
     public TrackedPoint(TrackedPoint other) {
         this.hints = new ArrayList<>();
         this.hints.addAll(other.hints);
         this.screenPos.set(other.screenPos);
+    }
+
+    public Quaternion WorldDirQuat() {
+        return new Quaternion().setEulerAnglesRad(-worldDir.y, worldDir.x, -worldDir.z);
+    }
+
+    public Hint GetPrimaryHint() {
+        return hints.get(0);
     }
 
     public TrackedPoint() {
@@ -65,15 +80,28 @@ public class TrackedPoint {
 
     public enum Hint {
         UNKNOWN("HINT.UNKNOWN"),
+        GLOBAL("HINT.GLOBAL"),
 
         HAND("HINT.HAND"),
         LEFT_HAND("HINT.HAND.LEFT"),
         RIGHT_HAND("HINT.HAND.RIGHT"),
 
         HEAD("HINT.HEAD"),
+        JAW("HINT.HEAD.JAW.BOTTOM"),
+        MOUTH("HINT.HEAD.JAW.TOP"),
+        MOUTH_LEFT("HINT.HEAD.JAW.LEFT"),
+        MOUTH_RIGHT("HINT.HEAD.JAW.RIGHT"),
+
         EYE("HINT.EYE"),
         LEFT_EYE("HINT.EYE.LEFT"),
+        LEFT_EYE_CORNER("HINT.EYE.LEFT.CORNER"),
+        TOP_LEFT_EYE("HINT.EYE.LEFT.TOP"),
+        BOT_LEFT_EYE("HINT.EYE.LEFT.BOTTOM"),
+
         RIGHT_EYE("HINT.EYE.RIGHT"),
+        RIGHT_EYE_CORNER("HINT.EYE.RIGHT.CORNER"),
+        TOP_RIGHT_EYE("HINT.EYE.RIGHT.TOP"),
+        BOT_RIGHT_EYE("HINT.EYE.RIGHT.BOTTOM"),
 
         SHOULDER("HINT.SHOULDER"),
         LEFT_SHOULDER("HINT.SHOULDER.LEFT"),
