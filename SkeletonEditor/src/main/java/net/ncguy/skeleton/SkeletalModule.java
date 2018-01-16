@@ -5,30 +5,53 @@ import net.ncguy.skeleton.ui.MappingTreePanel;
 import net.ncguy.skeleton.ui.MeshTreePanel;
 import net.ncguy.skeleton.ui.SkeletonTreePanel;
 import net.ncguy.tracking.display.ModularStage;
-import net.ncguy.ui.detachable.IDetachable;
+import net.ncguy.ui.detachable.DetachablePanel;
+import net.ncguy.ui.detachable.IPanel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public class SkeletalModule implements IMiscModule {
 
-    List<IDetachable> panels = new ArrayList<>();
+    List<DetachablePanel> panels = new ArrayList<>();
 
     @Override
     public void AddToScene(ModularStage stage) {
-        stage.AddPanel(new SkeletonTreePanel(), ModularStage.Sidebars.LEFT);
-        stage.AddPanel(new MeshTreePanel(stage), ModularStage.Sidebars.LEFT);
-//        AddPanel(new MappingPanel(), stage, ModularStage.Sidebars.RIGHT);
-        stage.AddPanel(new MappingTreePanel(), ModularStage.Sidebars.RIGHT);
+        stage.AddPanel(Panel(new SkeletonTreePanel()), ModularStage.Sidebars.LEFT);
+        stage.AddPanel(Panel(new MeshTreePanel(stage)), ModularStage.Sidebars.LEFT);
+        stage.AddPanel(Panel(new MappingTreePanel()), ModularStage.Sidebars.RIGHT);
+    }
+
+    public DetachablePanel Panel(IPanel panel) {
+        DetachablePanel d = new DetachablePanel(panel);
+        panels.add(d);
+        return d;
     }
 
     @Override
     public void RemoveFromScene(ModularStage stage) {
-//        stage.RemoveTab(treePanel);
-//        stage.RemoveTab(meshPanel);
-//        stage.RemoveTab(mapPanel);
         panels.forEach(stage::RemoveTab);
         panels.clear();
+    }
+
+    @Override
+    public <T extends IPanel> Optional<T> GetPanel(Class<T> cls) {
+        return Get(cls, p -> p.GetPanel().getClass().equals(cls));
+    }
+
+    @Override
+    public Optional<IPanel> GetPanel(String cls) {
+        return Get(IPanel.class, p -> p.GetPanel().getClass().getCanonicalName().equalsIgnoreCase(cls));
+    }
+
+    protected <T extends IPanel> Optional<T> Get(Class<T> type, Predicate<DetachablePanel> filter) {
+        return panels.stream()
+                .filter(filter)
+                .map(DetachablePanel::GetPanel)
+                .map(p -> (T) p)
+                .findFirst();
     }
 
     @Override

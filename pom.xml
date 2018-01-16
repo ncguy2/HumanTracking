@@ -17,6 +17,7 @@
         <module>AssetHandler</module>
         <module>FABRIK</module>
         <module>SkeletonEditor</module>
+        <module>Physics</module>
     </modules>
 
     <properties>
@@ -50,6 +51,11 @@
         <dependency>
             <groupId>com.badlogicgames.gdx</groupId>
             <artifactId>gdx-freetype</artifactId>
+            <version>${gdx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx-bullet</artifactId>
             <version>${gdx.version}</version>
         </dependency>
         <dependency>
@@ -101,6 +107,12 @@
         <dependency>
             <groupId>com.badlogicgames.gdx</groupId>
             <artifactId>gdx-freetype-platform</artifactId>
+            <version>${gdx.version}</version>
+            <classifier>natives-desktop</classifier>
+        </dependency>
+        <dependency>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx-bullet-platform</artifactId>
             <version>${gdx.version}</version>
             <classifier>natives-desktop</classifier>
         </dependency>

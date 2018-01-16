@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/FABRIK/FABRIK.iml" filepath="$PROJECT_DIR$/FABRIK/FABRIK.iml" group="plugin" />
       <module fileurl="file://$PROJECT_DIR$/HumanTrackingGDX.iml" filepath="$PROJECT_DIR$/HumanTrackingGDX.iml" />
       <module fileurl="file://$PROJECT_DIR$/IKSolver/IKSolver.iml" filepath="$PROJECT_DIR$/IKSolver/IKSolver.iml" group="plugin" />
+      <module fileurl="file://$PROJECT_DIR$/Physics/Physics.iml" filepath="$PROJECT_DIR$/Physics/Physics.iml" />
       <module fileurl="file://$PROJECT_DIR$/SkeletonEditor/SkeletonEditor.iml" filepath="$PROJECT_DIR$/SkeletonEditor/SkeletonEditor.iml" group="plugin" />
       <module fileurl="file://$PROJECT_DIR$/Trackers/TrackerAlpha/TrackerAlpha.iml" filepath="$PROJECT_DIR$/Trackers/TrackerAlpha/TrackerAlpha.iml" group="plugin/tracker" />
       <module fileurl="file://$PROJECT_DIR$/Trackers/TrackerPython/TrackerPython.iml" filepath="$PROJECT_DIR$/Trackers/TrackerPython/TrackerPython.iml" group="plugin/tracker" />

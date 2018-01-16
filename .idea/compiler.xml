@@ -10,6 +10,7 @@
         <module name="Diagnostics" />
         <module name="FABRIK" />
         <module name="IKSolver" />
+        <module name="Physics" />
         <module name="plugin.Diagnostics" />
         <module name="plugin.IKSolver" />
         <module name="plugin.tracker.TrackerAlpha" />
@@ -26,6 +27,7 @@
       <module name="FABRIK" target="1.8" />
       <module name="HumanTrackingGDX" target="1.8" />
       <module name="IKSolver" target="1.8" />
+      <module name="Physics" target="1.8" />
       <module name="plugin.Caliko" target="1.8" />
       <module name="plugin.Diagnostics" target="1.8" />
       <module name="plugin.IKSolver" target="1.8" />

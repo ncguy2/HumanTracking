@@ -50,6 +50,7 @@ import java.util.function.Consumer;
 import static com.badlogic.gdx.graphics.GL20.GL_DEPTH_TEST;
 import static com.badlogic.gdx.graphics.GL20.GL_LINES;
 import static net.ncguy.skeleton.TrackedBones.skeletalNode;
+import static net.ncguy.tracking.AppListener.renderTasks;
 import static net.ncguy.utils.Reference.Colour.RendererColours.BONE_LOCATION_ACTIVE_COLOUR;
 import static net.ncguy.utils.Reference.Colour.RendererColours.BONE_LOCATION_COLOUR;
 
@@ -66,6 +67,7 @@ public class TrackingSpace extends AbstractScreen {
             setModelFunc.accept(modelPath);
     }
 
+    SpriteBatch batch;
     FrameBuffer shapeFbo;
     ShaderProgram shapeRenderShader;
     Texture texture;
@@ -128,10 +130,11 @@ public class TrackingSpace extends AbstractScreen {
     @Override
     public void show() {
 
-
         Launcher.fileDroppedListeners.add(onFilesDroppedFunc);
 
         super.show();
+
+        batch = new SpriteBatch();
 
         shapeFbo = CreateFrameBuffer(Pixmap.Format.RGBA8888, 1, this.width, this.height, false);
 
@@ -800,6 +803,11 @@ public class TrackingSpace extends AbstractScreen {
         Gdx.gl.glDepthFunc(GL20.GL_GREATER);
         SKUtils.Render(skStructure, renderer, true);
         Gdx.gl.glDisable(GL_DEPTH_TEST);
+
+        batch.setProjectionMatrix(camera.projection);
+        batch.begin();
+        renderTasks.forEach(t -> t.accept(batch, camera));
+        batch.end();
         fbo.end();
     }
 

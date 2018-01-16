@@ -40,6 +40,7 @@ public abstract class ModuleLoader<T extends BaseModuleInterface> {
 
     public void Load(ModularStage stage, File jar) {
         List<T> items = loaded.get(jar);
+        if(items.isEmpty()) return;
 
         List<DependencyNode<T>> nodeList = items.stream()
                 .map(DependencyNode::new)
@@ -77,7 +78,8 @@ public abstract class ModuleLoader<T extends BaseModuleInterface> {
     }
 
     public void LoadAll(ModularStage stage) {
-        loaded.keySet().forEach(jar -> Load(stage, jar));
+        Set<File> keySet = loaded.keySet();
+        keySet.forEach(jar -> Load(stage, jar));
     }
 
     public void UnloadAll(ModularStage stage) {
@@ -111,6 +113,27 @@ public abstract class ModuleLoader<T extends BaseModuleInterface> {
         List<T> items = new ArrayList<>();
         loader.forEach(items::add);
         return items;
+    }
+
+    public <U extends T> Optional<U> Get(Class<U> cls) {
+        List<T> flattenedLoaded = new ArrayList<>();
+        loaded.values().forEach(flattenedLoaded::addAll);
+
+        return flattenedLoaded
+                .stream()
+                .filter(m -> m.getClass().equals(cls))
+                .map(m -> (U) m)
+                .findFirst();
+    }
+
+    public Optional<T> Get(String cls) {
+        List<T> flattenedLoaded = new ArrayList<>();
+        loaded.values().forEach(flattenedLoaded::addAll);
+
+        return flattenedLoaded
+                .stream()
+                .filter(m -> m.getClass().getCanonicalName().equals(cls))
+                .findFirst();
     }
 
     public static class DependencyNode<T extends BaseModuleInterface> {

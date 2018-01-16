@@ -88,5 +88,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="SkeletonEditor" scope="PROVIDED" />
   </component>
 </module>

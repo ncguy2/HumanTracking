@@ -25,6 +25,8 @@ import net.ncguy.tracking.utils.ShaderPreprocessor;
 import net.ncguy.tracking.world.Node;
 import net.ncguy.utils.AssetUtils;
 
+import static net.ncguy.tracking.AppListener.renderTasks;
+
 public abstract class AbstractScreen implements Screen {
 
     public static SimpleObjectProperty<Node> rootNode = new SimpleObjectProperty<>(null);
@@ -172,6 +174,8 @@ public abstract class AbstractScreen implements Screen {
 
         stage.act(delta);
         stage.draw();
+
+        renderTasks.forEach(t -> t.accept(stage.getBatch(), stage.getCamera()));
     }
 
     @Override

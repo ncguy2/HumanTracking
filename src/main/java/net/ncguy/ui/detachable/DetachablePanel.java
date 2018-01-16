@@ -13,6 +13,10 @@ public class DetachablePanel implements IDetachable {
         this.panel = panel;
     }
 
+    public IPanel GetPanel() {
+        return panel;
+    }
+
     @Override
     public void SetParent(IDetachableContainer parent) {
         this.parent = parent;

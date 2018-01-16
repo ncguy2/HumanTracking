@@ -1,5 +1,6 @@
 package net.ncguy.api.ik;
 
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import net.ncguy.utils.MathsUtils;
 
@@ -149,5 +150,11 @@ public class Bone {
     }
 
 
+    public void GetWorldTransform(Matrix4 worldTrans) {
+
+    }
+
+    public void SetWorldTransform(Matrix4 worldTrans) {
+    }
 
 }

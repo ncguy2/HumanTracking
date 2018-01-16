@@ -1,5 +1,6 @@
 package net.ncguy.skeleton;
 
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 
 import java.util.ArrayList;
@@ -260,4 +261,10 @@ public class SKJoint {
         position.set(pos);
     }
 
+    public void GetWorldTransform(Matrix4 worldTrans) {
+
+    }
+
+    public void SetWorldTransform(Matrix4 worldTrans) {
+    }
 }

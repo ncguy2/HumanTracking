@@ -2,6 +2,7 @@ package net.ncguy.api.ik;
 
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.model.Node;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import net.ncguy.utils.MathsUtils;
@@ -199,5 +200,37 @@ public class MeshBone extends Bone {
         node.isAnimated = false;
         node.calculateTransforms(propagateToChildren);
         node.calculateBoneTransforms(propagateToChildren);
+    }
+
+    @Override
+    public void GetWorldTransform(Matrix4 worldTrans) {
+        worldTrans.set(node.globalTransform.cpy().scl(.01f));
+//        worldTrans.setToTranslation(GetPosition());
+//        worldTrans.set(node.globalTransform);
+    }
+
+    @Override
+    public void SetWorldTransform(Matrix4 worldTrans) {
+        Matrix4 cpy = worldTrans.cpy();
+        // TODO Calculate worldspace->bonespace conversion
+
+
+        Vector3 translation = cpy.getTranslation(new Vector3());
+        Quaternion rotation = cpy.getRotation(new Quaternion());
+        Vector3 scale = cpy.getScale(new Vector3());
+
+        if(parent != null) {
+            translation.mul(parent.globalTransform.cpy().inv());
+//            rotation.add(parent.rotation.cpy());
+        }
+
+        node.translation.set(translation);
+//        node.rotation.set(rotation);
+//        node.scale.set(scale);
+
+//        worldTrans.getTranslation(translation);
+//        SetPosition(translation.x, translation.y, translation.z);
+
+        Update();
     }
 }

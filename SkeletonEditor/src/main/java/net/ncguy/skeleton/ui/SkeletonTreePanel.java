@@ -1,8 +1,10 @@
 package net.ncguy.skeleton.ui;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.Tree;
@@ -13,27 +15,58 @@ import com.kotcrab.vis.ui.widget.*;
 import net.ncguy.skeleton.SKJoint;
 import net.ncguy.skeleton.TrackedBones;
 import net.ncguy.tracking.display.TrackingSpace;
+import net.ncguy.ui.LabeledSeparator;
 import net.ncguy.ui.detachable.IPanel;
 import net.ncguy.utils.Reference;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static net.ncguy.skeleton.TrackedBones.selectedBone;
 
 public class SkeletonTreePanel extends VisTable implements IPanel {
 
-    VisTextButton resetSkeletonBtn;
-    VisTable content;
-    Tree tree;
-    VisScrollPane scroller;
-    boolean changedHere = false;
-    List<Tree.Node> treeNodes;
+    public VisTextButton resetSkeletonBtn;
+    public VisTable content;
+    public Tree tree;
+    public VisScrollPane scroller;
+    public boolean changedHere = false;
+    public List<Tree.Node> treeNodes;
+
+    public Map<Class<?>, List<MenuItem>> managedMenuItems;
+    public Map<Class<?>, String> managedMenuLocalisation;
+    public PopupMenu contextMenu;
 
     public SkeletonTreePanel() {
         super(false);
         treeNodes = new ArrayList<>();
+        managedMenuItems = new HashMap<>();
+        managedMenuLocalisation = new HashMap<>();
         Init();
+    }
+
+    @Override
+    public void AddManagedMenuName(Class<?> owner, String name) {
+        managedMenuLocalisation.put(owner, name);
+        contextMenu = null;
+    }
+
+    @Override
+    public void AddManagedMenuItem(Class<?> owner, MenuItem item) {
+        if(!managedMenuItems.containsKey(owner))
+            managedMenuItems.put(owner, new ArrayList<>());
+        managedMenuItems.get(owner).add(item);
+        contextMenu = null;
+    }
+
+    @Override
+    public void RemoveManagedItems(Class<?> owner) {
+        if(!managedMenuItems.containsKey(owner)) return;
+        managedMenuItems.remove(owner);
+        managedMenuLocalisation.remove(owner);
+        contextMenu = null;
     }
 
     @Override
@@ -48,15 +81,26 @@ public class SkeletonTreePanel extends VisTable implements IPanel {
     @Override
     public void AttachListeners() {
 
-        tree.addListener(new ClickListener() {
+        tree.addListener(new InputListener() {
+
             @Override
-            public void clicked(InputEvent event, float x, float y) {
-                super.clicked(event, x, y);
-                tree.invalidateHierarchy();
-                treeNodes.forEach(n -> {
-                    Tree.Node p = n.getParent();
-                    n.getActor().setVisible(p == null || p.isExpanded());
-                });
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                return true;
+            }
+
+            @Override
+            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                super.touchUp(event, x, y, pointer, button);
+
+                if(event.getButton() == Input.Buttons.LEFT) {
+                    tree.invalidateHierarchy();
+                    treeNodes.forEach(n -> {
+                        Tree.Node p = n.getParent();
+                        n.getActor().setVisible(p == null || p.isExpanded());
+                    });
+                }else if(event.getButton() == Input.Buttons.RIGHT) {
+                    OpenContextMenu(x, y);
+                }
             }
         });
 
@@ -95,6 +139,29 @@ public class SkeletonTreePanel extends VisTable implements IPanel {
                 }
             });
         });
+    }
+
+    private void OpenContextMenu(float x, float y) {
+        if(managedMenuItems.isEmpty()) return;
+
+        if(contextMenu == null) {
+            contextMenu = new PopupMenu();
+
+            boolean first = true;
+            for (Map.Entry<Class<?>, List<MenuItem>> entry : managedMenuItems.entrySet()) {
+                Class<?> owner = entry.getKey();
+                List<MenuItem> items = entry.getValue();
+                String s = managedMenuLocalisation.get(owner);
+                if(s != null && !s.isEmpty())
+                    contextMenu.add(new LabeledSeparator(s));
+                else if(!first)
+                    contextMenu.addSeparator();
+                items.forEach(contextMenu::addItem);
+                first = false;
+            }
+
+        }
+        contextMenu.showMenu(getStage(), x, y);
     }
 
     List<Tree.Node> FlattenTree() {

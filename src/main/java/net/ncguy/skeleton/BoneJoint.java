@@ -1,5 +1,6 @@
 package net.ncguy.skeleton;
 
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import net.ncguy.api.ik.Bone;
 
@@ -85,5 +86,15 @@ public class BoneJoint extends SKJoint {
     @Override
     public void SetModelPosition(Vector3 pos) {
         bone.SetModelPosition(pos);
+    }
+
+    @Override
+    public void GetWorldTransform(Matrix4 worldTrans) {
+        bone.GetWorldTransform(worldTrans);
+    }
+
+    @Override
+    public void SetWorldTransform(Matrix4 worldTrans) {
+        bone.SetWorldTransform(worldTrans);
     }
 }

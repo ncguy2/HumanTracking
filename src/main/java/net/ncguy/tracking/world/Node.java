@@ -15,7 +15,7 @@ import net.ncguy.tracking.utils.TransformStack;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class Node implements Disposable {
+public class Node extends Entity implements Disposable {
 
     public SimpleObjectProperty<PrimitiveType> wireframePrimitiveType = new SimpleObjectProperty<>(PrimitiveType.LINE_STRIP);
 
@@ -133,7 +133,10 @@ public class Node implements Disposable {
     }
 
     @Override
-    public void dispose() {}
+    public void dispose() {
+        children.forEach(Node::dispose);
+        Clear();
+    }
 
     public Matrix4 GetTransform() {
         return instance.transform;
